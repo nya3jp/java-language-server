@@ -1,3 +1,16 @@
+# About this fork
+
+This is a fork of [georgewfraser/java-language-server](https://github.com/georgewfraser/java-language-server)
+containing several fixes/improvements.
+
+There are several [topic branches](https://github.com/nya3jp/java-language-server/branches)
+containing changes in an isolated way. The master branch cherry-picks all such changes.
+
+I don't intend to maintain this repository as a full fork of the upstream project.
+All of my changes can be found as pull requests in the upstream repository, and I really hope that
+they're reviewed and merged. However, in reality, the upstream project looks paused for a while,
+so you may want to pick some changes here.
+
 # Language Server for Java using the [Java compiler API](https://docs.oracle.com/javase/10/docs/api/jdk.compiler-summary.html)
 
 A Java [language server](https://github.com/Microsoft/vscode-languageserver-protocol) based on v3.0 of the protocol and implemented using the Java compiler API.
