@@ -149,8 +149,13 @@ public class MarkdownHelper {
     }
 
     private static void parse(CharBuffer in, StringBuilder out) {
-        while (!empty(in)) {
+        while (true) {
             parseInner(in, out);
+            // parseInner should consume the whole input, except when an unmatched } is found.
+            if (empty(in)) {
+                break;
+            }
+            out.append(in.get());
         }
     }
 
