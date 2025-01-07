@@ -23,4 +23,9 @@ public class MarkdownHelperTest {
         assertThat(MarkdownHelper.asMarkdown("<code>foo</code> <code>bar</code>"), equalTo("`foo` `bar`"));
         assertThat(MarkdownHelper.asMarkdown("{@code foo} {@code bar}"), equalTo("`foo` `bar`"));
     }
+
+    @Test
+    public void unmatchedBraces() {
+        assertThat(MarkdownHelper.asMarkdown("{@code foo}}}}"), equalTo("`foo`}}}"));
+    }
 }
