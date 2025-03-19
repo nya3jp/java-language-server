@@ -9,17 +9,7 @@ import com.sun.source.tree.NewClassTree;
 import com.sun.source.util.DocTrees;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
-import java.util.function.Predicate;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.*;
+
 import org.javacs.CompileTask;
 import org.javacs.CompilerProvider;
 import org.javacs.FindHelper;
@@ -28,6 +18,19 @@ import org.javacs.hover.ShortTypePrinter;
 import org.javacs.lsp.ParameterInformation;
 import org.javacs.lsp.SignatureHelp;
 import org.javacs.lsp.SignatureInformation;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.function.Predicate;
+
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.*;
 
 public class SignatureProvider {
 
@@ -172,7 +175,8 @@ public class SignatureProvider {
         return info;
     }
 
-    private void addSourceInfo(CompileTask task, ExecutableElement method, SignatureInformation info) {
+    private void addSourceInfo(
+            CompileTask task, ExecutableElement method, SignatureInformation info) {
         var type = (TypeElement) method.getEnclosingElement();
         var className = type.getQualifiedName().toString();
         var methodName = method.getSimpleName().toString();
@@ -181,6 +185,7 @@ public class SignatureProvider {
         if (file.isEmpty()) return;
         var parse = compiler.parse(file.get());
         var source = FindHelper.findMethod(parse, className, methodName, erasedParameterTypes);
+        if (source == null) return;
         var path = Trees.instance(task.task).getPath(parse.root, source);
         var docTree = DocTrees.instance(task.task).getDocCommentTree(path);
         if (docTree != null) {
@@ -207,7 +212,8 @@ public class SignatureProvider {
         return list;
     }
 
-    private int activeParameter(CompileTask task, List<? extends ExpressionTree> arguments, long cursor) {
+    private int activeParameter(
+            CompileTask task, List<? extends ExpressionTree> arguments, long cursor) {
         var pos = Trees.instance(task.task).getSourcePositions();
         ;
         var root = task.root();
@@ -241,7 +247,8 @@ public class SignatureProvider {
         if (arguments.size() > overload.getParameters().size()) return false;
         for (var i = 0; i < arguments.size(); i++) {
             var argument = arguments.get(i);
-            var argumentType = Trees.instance(task.task).getTypeMirror(new TreePath(invocation, argument));
+            var argumentType =
+                    Trees.instance(task.task).getTypeMirror(new TreePath(invocation, argument));
             var parameterType = overload.getParameters().get(i).asType();
             if (!isCompatible(task, argumentType, parameterType)) return false;
         }
