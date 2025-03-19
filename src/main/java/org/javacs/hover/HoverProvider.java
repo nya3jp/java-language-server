@@ -3,12 +3,7 @@ package org.javacs.hover;
 import com.google.gson.JsonNull;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
-import java.util.logging.Logger;
-import javax.lang.model.element.*;
+
 import org.javacs.CompileTask;
 import org.javacs.CompilerProvider;
 import org.javacs.CompletionData;
@@ -18,6 +13,14 @@ import org.javacs.MarkdownHelper;
 import org.javacs.ParseTask;
 import org.javacs.lsp.CompletionItem;
 import org.javacs.lsp.MarkedString;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.logging.Logger;
+
+import javax.lang.model.element.*;
 
 public class HoverProvider {
     final CompilerProvider compiler;
@@ -51,6 +54,7 @@ public class HoverProvider {
         if (source.isEmpty()) return;
         var task = compiler.parse(source.get());
         var tree = findItem(task, data);
+        if (tree == null) return;
         resolveDetail(item, data, tree);
         var path = Trees.instance(task.task).getPath(task.root, tree);
         var docTree = DocTrees.instance(task.task).getDocCommentTree(path);
@@ -82,7 +86,8 @@ public class HoverProvider {
 
     private Tree findItem(ParseTask task, CompletionData data) {
         if (data.erasedParameterTypes != null) {
-            return FindHelper.findMethod(task, data.className, data.memberName, data.erasedParameterTypes);
+            return FindHelper.findMethod(
+                    task, data.className, data.memberName, data.erasedParameterTypes);
         }
         if (data.memberName != null) {
             return FindHelper.findField(task, data.className, data.memberName);
@@ -90,7 +95,7 @@ public class HoverProvider {
         if (data.className != null) {
             return FindHelper.findType(task, data.className);
         }
-        throw new RuntimeException("no className");
+        return null;
     }
 
     private String docs(CompileTask task, Element element) {
@@ -110,6 +115,7 @@ public class HoverProvider {
             if (file.isEmpty()) return "";
             var parse = compiler.parse(file.get());
             var tree = FindHelper.findField(parse, className, field.getSimpleName().toString());
+            if (tree == null) return "";
             return docs(parse, tree);
         } else if (element instanceof ExecutableElement) {
             var method = (ExecutableElement) element;
@@ -121,6 +127,7 @@ public class HoverProvider {
             if (file.isEmpty()) return "";
             var parse = compiler.parse(file.get());
             var tree = FindHelper.findMethod(parse, className, methodName, erasedParameterTypes);
+            if (tree == null) return "";
             return docs(parse, tree);
         } else {
             return "";
@@ -136,7 +143,8 @@ public class HoverProvider {
 
     // TODO this should be merged with logic in CompletionProvider
     // TODO this should parameterize the type
-    // TODO show more information about declarations---was this a parameter, a field? What were the modifiers?
+    // TODO show more information about declarations---was this a parameter, a field? What were the
+    // modifiers?
     private String printType(Element e) {
         if (e instanceof ExecutableElement) {
             var m = (ExecutableElement) e;
@@ -153,7 +161,10 @@ public class HoverProvider {
                 if (member instanceof ExecutableElement || member instanceof VariableElement) {
                     lines.add("  " + printType(member) + ";");
                 } else if (member instanceof TypeElement) {
-                    lines.add("  " + hoverTypeDeclaration((TypeElement) member) + " { /* removed */ }");
+                    lines.add(
+                            "  "
+                                    + hoverTypeDeclaration((TypeElement) member)
+                                    + " { /* removed */ }");
                 }
             }
             lines.add("}");

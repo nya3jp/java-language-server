@@ -12,14 +12,18 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
-import java.io.IOException;
-import java.util.regex.Pattern;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
+
 import org.javacs.lsp.Location;
 import org.javacs.lsp.Position;
 import org.javacs.lsp.Range;
+
+import java.io.IOException;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 
 public class FindHelper {
 
@@ -43,7 +47,11 @@ public class FindHelper {
             if (!isSameMethodType(method, erasedParameterTypes)) continue;
             return method;
         }
-        throw new RuntimeException("no method");
+        LOG.warning(
+                String.format(
+                        "Method not found: %s#%s(%s)",
+                        className, methodName, String.join(", ", erasedParameterTypes)));
+        return null;
     }
 
     public static VariableTree findField(ParseTask task, String className, String memberName) {
@@ -54,11 +62,16 @@ public class FindHelper {
             if (!variable.getName().contentEquals(memberName)) continue;
             return variable;
         }
-        throw new RuntimeException("no variable");
+        LOG.warning(String.format("Field not found: %s#%s", className, memberName));
+        return null;
     }
 
     public static ClassTree findType(ParseTask task, String className) {
-        return new FindTypeDeclarationNamed().scan(task.root, className);
+        var tree = new FindTypeDeclarationNamed().scan(task.root, className);
+        if (tree == null) {
+            LOG.warning(String.format("Type not found: %s", className));
+        }
+        return tree;
     }
 
     public static ExecutableElement findMethod(
@@ -71,6 +84,10 @@ public class FindHelper {
                 return method;
             }
         }
+        LOG.warning(
+                String.format(
+                        "Method not found: %s#%s(%s)",
+                        className, methodName, String.join(", ", erasedParameterTypes)));
         return null;
     }
 
@@ -167,4 +184,6 @@ public class FindHelper {
         }
         return -1;
     }
+
+    private static final Logger LOG = Logger.getLogger("main");
 }
