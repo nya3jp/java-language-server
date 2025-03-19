@@ -64,6 +64,7 @@ class JavaCompilerService implements CompilerProvider {
             }
             cachedCompile.borrow.close();
         }
+        cachedCompile = null;
         cachedCompile = doCompile(sources);
         cachedModified.clear();
         for (var f : sources) {
@@ -74,7 +75,14 @@ class JavaCompilerService implements CompilerProvider {
     private CompileBatch doCompile(Collection<? extends JavaFileObject> sources) {
         if (sources.isEmpty()) throw new RuntimeException("empty sources");
         var firstAttempt = new CompileBatch(this, sources);
-        var addFiles = firstAttempt.needsAdditionalSources();
+        Set<Path> addFiles;
+        try {
+            addFiles = firstAttempt.needsAdditionalSources();
+        } catch (RuntimeException e) {
+            firstAttempt.close();
+            firstAttempt.borrow.close();
+            throw e;
+        }
         if (addFiles.isEmpty()) return firstAttempt;
         // If the compiler needs additional source files that contain package-private files
         LOG.info("...need to recompile with " + addFiles);
