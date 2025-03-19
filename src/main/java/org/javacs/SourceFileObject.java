@@ -119,7 +119,9 @@ public class SourceFileObject implements JavaFileObject {
         if (contents != null) {
             return modified.toEpochMilli();
         }
-        return FileStore.modified(path).toEpochMilli();
+        var fileModified = FileStore.modified(path);
+        if (fileModified == null) return 0;
+        return fileModified.toEpochMilli();
     }
 
     @Override

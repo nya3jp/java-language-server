@@ -1,6 +1,6 @@
 package org.javacs;
 
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 import java.util.Set;
@@ -18,5 +18,12 @@ public class FileStoreTest {
     public void packageName() {
         var file = FindResource.path("/org/javacs/example/Goto.java");
         assertThat(FileStore.suggestedPackageName(file), equalTo("org.javacs.example"));
+    }
+
+    @Test
+    public void missingFile() {
+        var file = FindResource.path("/org/javacs/example/NoSuchFile.java");
+        assertThat(FileStore.packageName(file), nullValue());
+        assertThat(FileStore.modified(file), nullValue());
     }
 }

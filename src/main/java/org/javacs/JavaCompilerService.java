@@ -190,7 +190,7 @@ class JavaCompilerService implements CompilerProvider {
             if (!fileName.endsWith(".java")) continue;
             var className = fileName.substring(0, fileName.length() - ".java".length());
             var packageName = FileStore.packageName(file);
-            if (!packageName.isEmpty()) {
+            if (packageName != null && !packageName.isEmpty()) {
                 className = packageName + "." + className;
             }
             all.add(className);
@@ -207,7 +207,8 @@ class JavaCompilerService implements CompilerProvider {
 
     private boolean containsImport(Path file, String className) {
         var packageName = packageName(className);
-        if (FileStore.packageName(file).equals(packageName)) return true;
+        // Note: FileStore.packageName may return null.
+        if (packageName.equals(FileStore.packageName(file))) return true;
         var star = packageName + ".*";
         for (var i : readImports(file)) {
             if (i.equals(className) || i.equals(star)) return true;

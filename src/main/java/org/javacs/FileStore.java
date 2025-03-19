@@ -138,7 +138,11 @@ public class FileStore {
             readInfoFromDisk(file);
         }
         // Look up modified time from cache
-        return javaSources.get(file).modified;
+        var info = javaSources.get(file);
+        if (info == null) {
+            return null;
+        }
+        return info.modified;
     }
 
     static String packageName(Path file) {
@@ -147,7 +151,11 @@ public class FileStore {
             readInfoFromDisk(file);
         }
         // Look up package name from cache
-        return javaSources.get(file).packageName;
+        var info = javaSources.get(file);
+        if (info == null) {
+            return null;
+        }
+        return info.packageName;
     }
 
     public static String suggestedPackageName(Path file) {
@@ -157,7 +165,7 @@ public class FileStore {
             for (var sibling : javaSourcesIn(dir)) {
                 if (sibling.equals(file)) continue;
                 var packageName = packageName(sibling);
-                if (packageName.isBlank()) continue;
+                if (packageName == null || packageName.isBlank()) continue;
                 var relativePath = dir.relativize(file.getParent());
                 var relativePackage = relativePath.toString().replace(File.separatorChar, '.');
                 if (!relativePackage.isEmpty()) {
@@ -337,7 +345,7 @@ public class FileStore {
                 int lines = change.range.end.line - change.range.start.line;
                 int chars = change.range.end.character;
                 for (int lineSkip = 0; lineSkip < lines; lineSkip++) {
-                    reader.readLine();                    
+                    reader.readLine();
                 }
                 reader.skip(chars);
             }
