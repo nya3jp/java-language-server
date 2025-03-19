@@ -3,15 +3,16 @@ package org.javacs;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
+import org.javacs.debug.*;
+import org.javacs.debug.proto.*;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.logging.Logger;
-import org.javacs.debug.*;
-import org.javacs.debug.proto.*;
-import org.junit.Test;
 
 public class JavaDebugServerTest {
     Path workingDirectory = Paths.get("src/test/examples/debug");
@@ -45,12 +46,15 @@ public class JavaDebugServerTest {
             if (evt.breakpoint.verified) {
                 LOG.info(
                         String.format(
-                                "Breakpoint at %s:%d is verified", evt.breakpoint.source.path, evt.breakpoint.line));
+                                "Breakpoint at %s:%d is verified",
+                                evt.breakpoint.source.path, evt.breakpoint.line));
             } else {
                 LOG.info(
                         String.format(
                                 "Breakpoint at %s:%d cannot be verified because %s",
-                                evt.breakpoint.source.path, evt.breakpoint.line, evt.breakpoint.message));
+                                evt.breakpoint.source.path,
+                                evt.breakpoint.line,
+                                evt.breakpoint.message));
             }
         }
 
@@ -62,9 +66,18 @@ public class JavaDebugServerTest {
 
     public void launchProcess(String mainClass) throws IOException, InterruptedException {
         var command =
-                List.of("java", "-Xdebug", "-Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y", mainClass);
+                List.of(
+                        "java",
+                        "-Xdebug",
+                        "-Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y",
+                        mainClass);
         LOG.info("Launch " + String.join(", ", command));
-        process = new ProcessBuilder().command(command).directory(workingDirectory.toFile()).inheritIO().start();
+        process =
+                new ProcessBuilder()
+                        .command(command)
+                        .directory(workingDirectory.toFile())
+                        .inheritIO()
+                        .start();
         java.lang.Thread.sleep(1000);
     }
 
@@ -112,7 +125,9 @@ public class JavaDebugServerTest {
                 var stack = server.stackTrace(requestTrace);
                 System.out.println("Thread main:");
                 for (var frame : stack.stackFrames) {
-                    System.out.println(String.format("\t%s:%d (%s)", frame.name, frame.line, frame.source.path));
+                    System.out.println(
+                            String.format(
+                                    "\t%s:%d (%s)", frame.name, frame.line, frame.source.path));
                 }
                 // Get variables
                 var requestScopes = new ScopesArguments();
@@ -202,7 +217,9 @@ public class JavaDebugServerTest {
                 var stack = server.stackTrace(requestTrace);
                 System.out.println("Thread main:");
                 for (var frame : stack.stackFrames) {
-                    System.out.println(String.format("\t%s:%d (%s)", frame.name, frame.line, frame.source.path));
+                    System.out.println(
+                            String.format(
+                                    "\t%s:%d (%s)", frame.name, frame.line, frame.source.path));
                 }
                 // Get variables
                 var requestScopes = new ScopesArguments();
@@ -281,6 +298,24 @@ public class JavaDebugServerTest {
 
         // Wait for process to exit
         server.continue_(new ContinueArguments());
+        process.waitFor();
+    }
+
+    @Test
+    public void setBreakpointInnerClasses() throws IOException, InterruptedException {
+        launchProcess("InnerClasses");
+        // Attach to the process
+        attach(5005);
+        // Set breakpoints
+        setBreakpoint("InnerClasses", 3); // at main
+        setBreakpoint("InnerClasses", 10); // at Inner.run
+        setBreakpoint("InnerClasses", 15); // at Runnable.run
+        server.configurationDone();
+        // Should stop 3 times
+        for (int i = 0; i < 3; i++) {
+            stoppedEvents.take();
+            server.continue_(new ContinueArguments());
+        }
         process.waitFor();
     }
 
