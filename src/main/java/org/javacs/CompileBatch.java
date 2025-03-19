@@ -58,9 +58,11 @@ class CompileBatch implements AutoCloseable {
             if (!isValidFileRange(err)) continue;
             var className = errorText(err);
             var packageName = packageName(err);
-            var location = findPackagePrivateClass(packageName, className);
-            if (location != FILE_NOT_FOUND) {
-                addFiles.add(location);
+            if (packageName != null) {
+                var location = findPackagePrivateClass(packageName, className);
+                if (location != FILE_NOT_FOUND) {
+                    addFiles.add(location);
+                }
             }
         }
         return addFiles;

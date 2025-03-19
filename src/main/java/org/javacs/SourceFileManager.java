@@ -44,7 +44,7 @@ class SourceFileManager extends ForwardingJavaFileManager<StandardJavaFileManage
             var source = (SourceFileObject) file;
             var packageName = FileStore.packageName(source.path);
             var className = removeExtension(source.path.getFileName().toString());
-            if (!packageName.isEmpty()) className = packageName + "." + className;
+            if (packageName != null && !packageName.isEmpty()) className = packageName + "." + className;
             return className;
         } else {
             return super.inferBinaryName(location, file);
