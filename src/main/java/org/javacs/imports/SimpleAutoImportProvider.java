@@ -15,7 +15,7 @@ import org.javacs.lsp.TextEdit;
 public class SimpleAutoImportProvider implements AutoImportProvider {
     public static final SimpleAutoImportProvider INSTANCE = new SimpleAutoImportProvider();
 
-    private final SectionedImportOrderHelper helper = new SectionedImportOrderHelper((className) -> 0);
+    private final SectionedImportOrderHelper helper = new SectionedImportOrderHelper((className, isStatic) -> 0);
 
     private SimpleAutoImportProvider() {}
 
