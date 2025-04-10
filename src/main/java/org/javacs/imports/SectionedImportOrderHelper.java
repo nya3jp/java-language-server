@@ -20,7 +20,7 @@ class SectionedImportOrderHelper {
      * increasing order.
      */
     public interface SectionFunction {
-        int sectionOf(String className);
+        int sectionOf(String className, boolean isStatic);
     }
 
     private final SectionFunction sectionFunction;
@@ -67,11 +67,12 @@ class SectionedImportOrderHelper {
         }
 
         // Find the position to insert a new import.
-        int newImportSection = sectionFunction.sectionOf(className);
+        int newImportSection = sectionFunction.sectionOf(className, false);
         int insertPosition = imports.size();
         for (var i = 0; i < imports.size(); i++) {
-            String nextClassName = imports.get(i).getQualifiedIdentifier().toString();
-            int nextImportSection = sectionFunction.sectionOf(nextClassName);
+            var currentImport = imports.get(i);
+            String nextClassName = currentImport.getQualifiedIdentifier().toString();
+            int nextImportSection = sectionFunction.sectionOf(nextClassName, currentImport.isStatic());
             if (nextImportSection > newImportSection || (nextImportSection == newImportSection && nextClassName.compareTo(className) > 0)) {
                 insertPosition = i;
                 break;
@@ -81,7 +82,7 @@ class SectionedImportOrderHelper {
         if (insertPosition == imports.size()) {
             // Add to the end.
             var lastImport = imports.get(imports.size() - 1);
-            int lastImportSection = sectionFunction.sectionOf(lastImport.getQualifiedIdentifier().toString());
+            int lastImportSection = sectionFunction.sectionOf(lastImport.getQualifiedIdentifier().toString(), lastImport.isStatic());
             String insertCode = importCode;
             if (lastImportSection < newImportSection) {
                 insertCode = "\n" + insertCode;
@@ -94,13 +95,14 @@ class SectionedImportOrderHelper {
 
         // Insert to the beginning or the middle.
         var nextImport = imports.get(insertPosition);
-        int nextImportSection = sectionFunction.sectionOf(nextImport.getQualifiedIdentifier().toString());
+        int nextImportSection = sectionFunction.sectionOf(nextImport.getQualifiedIdentifier().toString(), nextImport.isStatic());
         var nextImportStartPos = sourcePositions.getStartPosition(root, nextImport);
         var nextImportLine = (int) lineMap.getLineNumber(nextImportStartPos) - 1;
         var editPosition = new Position(nextImportLine, 0);
         String insertCode = importCode;
         if (newImportSection < nextImportSection) {
-            if (insertPosition > 0 && sectionFunction.sectionOf(imports.get(insertPosition - 1).getQualifiedIdentifier().toString()) == newImportSection) {
+            var previousImport = imports.get(insertPosition - 1);
+            if (insertPosition > 0 && sectionFunction.sectionOf(previousImport.getQualifiedIdentifier().toString(), previousImport.isStatic()) == newImportSection) {
                 // Append an import to the end of the previous section.
                 editPosition.line--;
             } else {

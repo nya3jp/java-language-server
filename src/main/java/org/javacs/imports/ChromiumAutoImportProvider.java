@@ -26,7 +26,10 @@ public class ChromiumAutoImportProvider implements AutoImportProvider {
         return helper.addImport(className, root, sourcePositions);
     }
 
-    private static int sectionOf(String className) {
+    private static int sectionOf(String className, boolean isStatic) {
+        if (isStatic) {
+            return 0;
+        }
         if (className.startsWith("com.google.android.apps.chrome.")) {
             return 7;
         }
